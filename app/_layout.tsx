@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform, useColorScheme } from 'react-native';
 import Colors from '@/constants/Colors';
 
-export default function RootLayout(): JSX.Element {
+export default function RootLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 

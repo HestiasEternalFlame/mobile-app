@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAppStore } from '@/stores/useAppStore';
+import { useRecipe } from '@/hooks/useRecipe';
 
 import {
   View,
@@ -10,6 +12,7 @@ import {
   RefreshControl,
   Alert,
   Dimensions,
+  TextInput,
   useColorScheme,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -76,15 +79,22 @@ const mockCookbooks: Cookbook[] = [
   },
 ];
 
-export default function HomeScreen(): JSX.Element {
+export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+
+  const { data: recipes, isLoadingRecipe, errorRecipe } = useRecipe();
+
 
   // State
   const [recentRecipes, setRecentRecipes] = useState<Recipe[]>([]);
   const [featuredCookbooks, setFeaturedCookbooks] = useState<Cookbook[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const isSearchActive = useAppStore((state) => state.isSearchActive);
+  const setSearchActive = useAppStore((state) => state.setSearchActive);
 
   // Load home data (mock for now)
   const loadHomeData = useCallback(async (): Promise<void> => {
@@ -133,13 +143,32 @@ export default function HomeScreen(): JSX.Element {
       }
       showsVerticalScrollIndicator={false}
     >
-      {/* Welcome Section */}
-      <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeText}>Welcome to CookbookAI</Text>
-        <Text style={styles.welcomeSubtext}>
-          Discover, organize, and enjoy your favorite recipes
-        </Text>
+      {/* Search */}
+      <View style={styles.searchBarContainer}>
+        <TextInput
+          style={styles.searchBar}
+          placeholder="Search recipes..."
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onFocus={() => setSearchActive(true)}
+          autoFocus={false}
+        />
       </View>
+
+      {!isSearchActive ? (
+          <>
+            {/* Full homepage content */}
+          </>
+        ) : (
+          <View style={styles.searchResults}>
+            <Text style={styles.searchTitle}>Search Results for "{searchQuery}"</Text>
+            {/* TODO: Display search results */}
+            <TouchableOpacity onPress={() => setSearchActive(false)}>
+              <Text style={styles.cancelSearch}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
       {/* Stats Card */}
       <View style={styles.statsCard}>
@@ -152,10 +181,6 @@ export default function HomeScreen(): JSX.Element {
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{mockCookbooks.length}</Text>
             <Text style={styles.statLabel}>Cookbooks</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>42</Text>
-            <Text style={styles.statLabel}>Ingredients</Text>
           </View>
         </View>
       </View>
@@ -188,23 +213,18 @@ export default function HomeScreen(): JSX.Element {
           <Ionicons name="chevron-forward" size={20} color={colors.icon} />
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.actionCard, { borderLeftColor: colors.info }]}
-          onPress={() => router.push('/(tabs)/search')}
-        >
-          <Ionicons name="search-outline" size={32} color={colors.info} />
-          <View style={styles.actionCardText}>
-            <Text style={styles.actionCardTitle}>Search Recipes</Text>
-            <Text style={styles.actionCardSubtitle}>Find recipes by ingredients</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.icon} />
-        </TouchableOpacity>
+        
       </View>
 
       {/* Recent Recipes */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Recipes</Text>
+                  {isLoadingRecipe && <Text>Loading...</Text>}
+        {errorRecipe && <Text>Error loading recipes</Text>}
+        {recipes?.map(recipe => (
+          <Text key={recipe.id}>{recipe.title}</Text>
+        ))}
           <TouchableOpacity onPress={() => router.push('/(tabs)/recipes')}>
             <Text style={styles.viewAllText}>View All</Text>
           </TouchableOpacity>
@@ -322,6 +342,33 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
+  },
+  searchBarContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    backgroundColor: colors.background,
+  },
+  searchBar: {
+    height: 40,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: colors.surface,
+    color: colors.text,
+  },
+  searchResults: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: colors.background,
+  },
+  searchTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  cancelSearch: {
+    marginTop: 16,
+    color: colors.primary,
   },
   welcomeSection: {
     backgroundColor: colors.primary,

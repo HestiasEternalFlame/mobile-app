@@ -1,36 +1,68 @@
-// app/(tabs)/cookbooks.tsx
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, FlatList, Image, ActivityIndicator, StyleSheet } from 'react-native';
+import { useCookbooks } from '@/hooks/useCookbooks'; // adjust path if needed
+import CookbookCard from '@/components/CookbookCard';
 
 export default function CookbooksScreen() {
+  const { data, isLoading, error } = useCookbooks();
+  const cookbooks = data ?? []; // fallback to empty array while loading
+
+  if (isLoading) return <ActivityIndicator size="large" style={styles.center} />;
+  if (error) return <Text style={styles.center}>Failed to load cookbooks {error.message}</Text>;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Cookbooks</Text>
-      <Text style={styles.subtitle}>Coming soon...</Text>
-    </View>
-  );
+    <FlatList
+        data={cookbooks}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.container}
+        renderItem={({ item }) => (
+        <CookbookCard
+            id={item.id}
+            title={item.title}
+            coverId={item.openLibraryCoverId}
+        />
+        )}
+    />
+);
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F9FAFB',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginTop: 8,
-  },
+    center: {
+        marginTop: 40,
+        textAlign: 'center',
+    },
+    container: {
+        padding: 16,
+    },
+    cover: {
+        width: 80,
+        height: 120,
+        borderRadius: 6,
+        marginBottom: 8,
+        backgroundColor: '#eee',
+        justifyContent: 'center',
+        alignItems: 'center',
+        },
+        placeholder: {
+        backgroundColor: '#ccc',
+        },
+        placeholderText: {
+        fontSize: 12,
+        color: '#666',
+        },
+    card: {
+        backgroundColor: '#f0f0f0',
+        padding: 16,
+        marginBottom: 12,
+        borderRadius: 8,
+    },
+    title: {
+        fontWeight: 'bold',
+        fontSize: 18,
+    },
+    description: {
+        marginTop: 4,
+        fontSize: 14,
+        color: '#555',
+    },
 });
-
-// app/(tabs)/recipes.tsx
-// Same structure for recipes screen
-
-// app/(tabs)/search.tsx  
-// Same structure for search screen
