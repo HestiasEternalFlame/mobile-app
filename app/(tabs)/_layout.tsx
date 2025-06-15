@@ -1,6 +1,5 @@
 import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { Link, Tabs } from 'expo-router';
 import { Pressable } from 'react-native';
@@ -19,10 +18,8 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const queryClient = new QueryClient();
 
   return (
-    <QueryClientProvider client={queryClient}>
 
       <Tabs
         screenOptions={{
@@ -53,14 +50,12 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="two"
+          name="cookbooks"
           options={{
-            title: 'Tab Two',
-            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+            title: 'Cookbooks',
+            tabBarIcon: ({ color }) => <TabBarIcon name="book" color={color} />,
           }}
         />
       </Tabs>
-    </QueryClientProvider>
-
   );
 }

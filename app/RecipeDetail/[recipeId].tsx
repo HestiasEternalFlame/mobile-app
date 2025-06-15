@@ -24,13 +24,34 @@ export default function RecipeDetailScreen() {
       <Text style={styles.title}>{recipe.title}</Text>
 
       <Text style={styles.section}>Ingredients</Text>
-      <Text style={styles.text}>{recipe.ingredients?.join('\n')}</Text>
+      {recipe.recipe_ingredients?.length ? (
+        recipe.recipe_ingredients.map((entry, index) => {
+          const { quantity, unit, preparation, ingredients_master } = entry;
+          const ingredientText = [
+            quantity,
+            unit,
+            ingredients_master?.name,
+            preparation ? `(${preparation})` : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
+
+          return (
+            <Text style={styles.text} key={index}>
+              • {ingredientText}
+            </Text>
+          );
+        })
+      ) : (
+        <Text style={styles.text}>No ingredients found.</Text>
+      )}
 
       <Text style={styles.section}>Instructions</Text>
       <Text style={styles.text}>{recipe.instructions}</Text>
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

@@ -19,8 +19,8 @@ export default function CookbookCard({ id, title, coverId }: CookbookCardProps) 
     ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`
     : null;
 
-  return (
-    <Pressable onPress={() => router.push(`/cookbook/${id}`)} style={styles.card}>
+    return (
+    <Pressable onPress={() => router.push(`/cookbookDetail/${id}`)} style={styles.card}>
       {coverUrl && !imageError ? (
         <Image
           source={{ uri: coverUrl }}

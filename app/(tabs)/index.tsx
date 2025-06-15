@@ -27,7 +27,6 @@ interface Recipe {
   image_url?: string;
   prep_time?: number;
   servings?: number;
-  difficulty?: 'easy' | 'medium' | 'hard';
 }
 
 interface Cookbook {
@@ -47,7 +46,6 @@ const mockRecipes: Recipe[] = [
     image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300',
     prep_time: 30,
     servings: 4,
-    difficulty: 'medium',
   },
   {
     id: 2,
@@ -56,7 +54,6 @@ const mockRecipes: Recipe[] = [
     image_url: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=300',
     prep_time: 20,
     servings: 24,
-    difficulty: 'easy',
   },
 ];
 
@@ -122,14 +119,6 @@ export default function HomeScreen() {
     loadHomeData();
   }, [loadHomeData]);
 
-  const getDifficultyColor = (difficulty: Recipe['difficulty']): string => {
-    switch (difficulty) {
-      case 'easy': return colors.success;
-      case 'medium': return colors.warning;
-      case 'hard': return colors.error;
-      default: return colors.secondary;
-    }
-  };
 
 
   const styles = createStyles(colors);
@@ -264,18 +253,6 @@ export default function HomeScreen() {
                     {recipe.servings ? `${recipe.servings} servings` : 'N/A'}
                   </Text>
                 </View>
-                {recipe.difficulty && (
-                  <View style={styles.metadataItem}>
-                    <Ionicons 
-                      name="flame-outline" 
-                      size={14} 
-                      color={getDifficultyColor(recipe.difficulty)} 
-                    />
-                    <Text style={[styles.metadataText, { color: getDifficultyColor(recipe.difficulty) }]}>
-                      {recipe.difficulty}
-                    </Text>
-                  </View>
-                )}
               </View>
             </View>
           </TouchableOpacity>

@@ -36,13 +36,14 @@ export default function CookbookDetailScreen() {
       ListHeaderComponent={<Text style={styles.header}>Recipes in Cookbook: {cookbookId}</Text>}
       renderItem={({ item }) => (
         <Pressable
-          onPress={() => router.push(`/recipe/${item.id}`)}
+          onPress={() => router.push(`/recipeDetail/${item.id}`)}
           style={styles.recipeItem}
         >
           <Text style={styles.recipeTitle}>{item.title}</Text>
         </Pressable>
       )}
     />
+    
   );
 }
 

@@ -15,9 +15,9 @@ export function useRecipesByCookbook(cookbookId: string) {
   return useQuery<Recipe[]>({
     queryKey: ['recipesByCookbook', cookbookId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE_URL}/recipes?cookbookId=${cookbookId}`);
+      const { data } = await axios.get(`${API_BASE_URL}/recipes/by/cookbook?cookbookId=${cookbookId}`);
       return data;
     },
-    enabled: !!cookbookId, // avoid running before param is available
+    enabled: !!cookbookId,
   });
 }
