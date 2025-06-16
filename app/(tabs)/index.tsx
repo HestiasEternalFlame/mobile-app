@@ -16,6 +16,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors'; // Relative import
 
@@ -80,9 +81,25 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  const { data: recipes, isLoadingRecipe, errorRecipe } = useRecipe();
+  const { data: recipes } = useRecipe();
 
+  const isLoadingRecipe = false;
+  const errorRecipe = false;
 
+  // Get Firebase user and logout function from auth store
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Navigation will be handled automatically by _layout.tsx
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+      
   // State
   const [recentRecipes, setRecentRecipes] = useState<Recipe[]>([]);
   const [featuredCookbooks, setFeaturedCookbooks] = useState<Cookbook[]>([]);
@@ -119,8 +136,6 @@ export default function HomeScreen() {
     loadHomeData();
   }, [loadHomeData]);
 
-
-
   const styles = createStyles(colors);
 
   return (
@@ -147,7 +162,171 @@ export default function HomeScreen() {
 
       {!isSearchActive ? (
           <>
-            {/* Full homepage content */}
+            {/* User Profile Section */}
+            {user && (
+              <View style={styles.userSection}>
+                <Text style={styles.userWelcome}>
+                  Welcome back, {user.displayName || user.name || 'User'}!
+                </Text>
+                <Text style={styles.userEmail}>{user.email}</Text>
+                {user.lastLogin && (
+                  <Text style={styles.lastLogin}>
+                    Last login: {new Date(user.lastLogin).toLocaleDateString()}
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {/* Stats Card */}
+            <View style={styles.statsCard}>
+              <Text style={styles.statsTitle}>Your Collection</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>{mockRecipes.length}</Text>
+                  <Text style={styles.statLabel}>Recipes</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>{mockCookbooks.length}</Text>
+                  <Text style={styles.statLabel}>Cookbooks</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Quick Actions */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Quick Actions</Text>
+              
+              <TouchableOpacity 
+                style={[styles.actionCard, { borderLeftColor: colors.success }]}
+                onPress={() => router.push('/(tabs)/cookbooks')}
+              >
+                <Ionicons name="library-outline" size={32} color={colors.success} />
+                <View style={styles.actionCardText}>
+                  <Text style={styles.actionCardTitle}>Browse Cookbooks</Text>
+                  <Text style={styles.actionCardSubtitle}>Explore your recipe collections</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.actionCard, { borderLeftColor: colors.warning }]}
+                onPress={() => router.push('/(tabs)/recipes')}
+              >
+                <Ionicons name="restaurant-outline" size={32} color={colors.warning} />
+                <View style={styles.actionCardText}>
+                  <Text style={styles.actionCardTitle}>All Recipes</Text>
+                  <Text style={styles.actionCardSubtitle}>Browse all available recipes</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Recent Recipes */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Recent Recipes</Text>
+                {isLoadingRecipe && <Text>Loading...</Text>}
+                {errorRecipe && <Text>Error loading recipes</Text>}
+                {recipes?.map(recipe => (
+                  <Text key={recipe.id}>{recipe.title}</Text>
+                ))}
+                <TouchableOpacity onPress={() => router.push('/(tabs)/recipes')}>
+                  <Text style={styles.viewAllText}>View All</Text>
+                </TouchableOpacity>
+              </View>
+              
+              {recentRecipes.map((recipe) => (
+                <TouchableOpacity
+                  key={recipe.id}
+                  style={styles.recipeCard}
+                  onPress={() => {
+                    // Navigate to recipe detail (you'll create this later)
+                    Alert.alert('Recipe', `Opening ${recipe.title}`);
+                  }}
+                >
+                  <Image
+                    source={{ uri: recipe.image_url }}
+                    style={styles.recipeImage}
+                    defaultSource={{ uri: 'https://via.placeholder.com/120x120?text=Recipe' }}
+                  />
+                  <View style={styles.recipeContent}>
+                    <Text style={styles.recipeTitle} numberOfLines={2}>
+                      {recipe.title}
+                    </Text>
+                    <Text style={styles.recipeDescription} numberOfLines={2}>
+                      {recipe.description || 'Delicious recipe to try'}
+                    </Text>
+                    <View style={styles.recipeMetadata}>
+                      <View style={styles.metadataItem}>
+                        <Ionicons name="time-outline" size={14} color={colors.icon} />
+                        <Text style={styles.metadataText}>
+                          {recipe.prep_time ? `${recipe.prep_time} min` : 'N/A'}
+                        </Text>
+                      </View>
+                      <View style={styles.metadataItem}>
+                        <Ionicons name="people-outline" size={14} color={colors.icon} />
+                        <Text style={styles.metadataText}>
+                          {recipe.servings ? `${recipe.servings} servings` : 'N/A'}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Featured Cookbooks */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Featured Cookbooks</Text>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/cookbooks')}>
+                  <Text style={styles.viewAllText}>View All</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false} 
+                style={styles.cookbooksRow}
+                contentContainerStyle={styles.cookbooksRowContent}
+              >
+                {featuredCookbooks.map((cookbook) => (
+                  <TouchableOpacity
+                    key={cookbook.id}
+                    style={styles.cookbookCard}
+                    onPress={() => {
+                      // Navigate to cookbook detail (you'll create this later)
+                      Alert.alert('Cookbook', `Opening ${cookbook.title}`);
+                    }}
+                  >
+                    <Image
+                      source={{ uri: cookbook.image_url }}
+                      style={styles.cookbookImage}
+                      defaultSource={{ uri: 'https://via.placeholder.com/140x100?text=Cookbook' }}
+                    />
+                    <Text style={styles.cookbookTitle} numberOfLines={2}>
+                      {cookbook.title}
+                    </Text>
+                    <Text style={styles.cookbookRecipeCount}>
+                      {cookbook.recipe_count || 0} recipes
+                    </Text>
+                    {cookbook.category && (
+                      <View style={styles.cookbookCategory}>
+                        <Text style={styles.cookbookCategoryText}>
+                          {cookbook.category}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Enhanced Logout Button */}
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.logoutButtonText}>Logout</Text>
+            </TouchableOpacity>
           </>
         ) : (
           <View style={styles.searchResults}>
@@ -158,153 +337,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         )}
-
-      {/* Stats Card */}
-      <View style={styles.statsCard}>
-        <Text style={styles.statsTitle}>Your Collection</Text>
-        <View style={styles.statsGrid}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{mockRecipes.length}</Text>
-            <Text style={styles.statLabel}>Recipes</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{mockCookbooks.length}</Text>
-            <Text style={styles.statLabel}>Cookbooks</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        
-        <TouchableOpacity 
-          style={[styles.actionCard, { borderLeftColor: colors.success }]}
-          onPress={() => router.push('/(tabs)/cookbooks')}
-        >
-          <Ionicons name="library-outline" size={32} color={colors.success} />
-          <View style={styles.actionCardText}>
-            <Text style={styles.actionCardTitle}>Browse Cookbooks</Text>
-            <Text style={styles.actionCardSubtitle}>Explore your recipe collections</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.icon} />
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.actionCard, { borderLeftColor: colors.warning }]}
-          onPress={() => router.push('/(tabs)/recipes')}
-        >
-          <Ionicons name="restaurant-outline" size={32} color={colors.warning} />
-          <View style={styles.actionCardText}>
-            <Text style={styles.actionCardTitle}>All Recipes</Text>
-            <Text style={styles.actionCardSubtitle}>Browse all available recipes</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.icon} />
-        </TouchableOpacity>
-
-        
-      </View>
-
-      {/* Recent Recipes */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Recipes</Text>
-                  {isLoadingRecipe && <Text>Loading...</Text>}
-        {errorRecipe && <Text>Error loading recipes</Text>}
-        {recipes?.map(recipe => (
-          <Text key={recipe.id}>{recipe.title}</Text>
-        ))}
-          <TouchableOpacity onPress={() => router.push('/(tabs)/recipes')}>
-            <Text style={styles.viewAllText}>View All</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {recentRecipes.map((recipe) => (
-          <TouchableOpacity
-            key={recipe.id}
-            style={styles.recipeCard}
-            onPress={() => {
-              // Navigate to recipe detail (you'll create this later)
-              Alert.alert('Recipe', `Opening ${recipe.title}`);
-            }}
-          >
-            <Image
-              source={{ uri: recipe.image_url }}
-              style={styles.recipeImage}
-              defaultSource={{ uri: 'https://via.placeholder.com/120x120?text=Recipe' }}
-            />
-            <View style={styles.recipeContent}>
-              <Text style={styles.recipeTitle} numberOfLines={2}>
-                {recipe.title}
-              </Text>
-              <Text style={styles.recipeDescription} numberOfLines={2}>
-                {recipe.description || 'Delicious recipe to try'}
-              </Text>
-              <View style={styles.recipeMetadata}>
-                <View style={styles.metadataItem}>
-                  <Ionicons name="time-outline" size={14} color={colors.icon} />
-                  <Text style={styles.metadataText}>
-                    {recipe.prep_time ? `${recipe.prep_time} min` : 'N/A'}
-                  </Text>
-                </View>
-                <View style={styles.metadataItem}>
-                  <Ionicons name="people-outline" size={14} color={colors.icon} />
-                  <Text style={styles.metadataText}>
-                    {recipe.servings ? `${recipe.servings} servings` : 'N/A'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Featured Cookbooks */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Featured Cookbooks</Text>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/cookbooks')}>
-            <Text style={styles.viewAllText}>View All</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          style={styles.cookbooksRow}
-          contentContainerStyle={styles.cookbooksRowContent}
-        >
-          {featuredCookbooks.map((cookbook) => (
-            <TouchableOpacity
-              key={cookbook.id}
-              style={styles.cookbookCard}
-              onPress={() => {
-                // Navigate to cookbook detail (you'll create this later)
-                Alert.alert('Cookbook', `Opening ${cookbook.title}`);
-              }}
-            >
-              <Image
-                source={{ uri: cookbook.image_url }}
-                style={styles.cookbookImage}
-                defaultSource={{ uri: 'https://via.placeholder.com/140x100?text=Cookbook' }}
-              />
-              <Text style={styles.cookbookTitle} numberOfLines={2}>
-                {cookbook.title}
-              </Text>
-              <Text style={styles.cookbookRecipeCount}>
-                {cookbook.recipe_count || 0} recipes
-              </Text>
-              {cookbook.category && (
-                <View style={styles.cookbookCategory}>
-                  <Text style={styles.cookbookCategoryText}>
-                    {cookbook.category}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
 
       {/* Bottom spacing */}
       <View style={styles.bottomSpacing} />
@@ -347,6 +379,34 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginTop: 16,
     color: colors.primary,
   },
+  // User Profile Section Styles
+  userSection: {
+    backgroundColor: colors.surface,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  userWelcome: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: colors.secondary,
+    marginBottom: 4,
+  },
+  lastLogin: {
+    fontSize: 12,
+    color: colors.secondary,
+  },
   welcomeSection: {
     backgroundColor: colors.primary,
     padding: 24,
@@ -365,7 +425,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   statsCard: {
     backgroundColor: colors.surface,
     marginHorizontal: 16,
-    marginTop: -20,
+    marginTop: 16,
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
@@ -544,6 +604,28 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontSize: 10,
     color: '#4F46E5',
     fontWeight: '600',
+  },
+  // Enhanced Logout Button Styles
+  logoutButton: {
+    backgroundColor: '#FF3B30',
+    marginHorizontal: 16,
+    marginTop: 24,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  logoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   bottomSpacing: {
     height: 24,

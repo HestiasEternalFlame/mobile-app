@@ -22,7 +22,7 @@ type Recipe = {
 };
 
 
-export function useRecipe(recipeId: string) {
+export function useRecipe(recipeId?: string) {
   return useQuery<Recipe>({
     queryKey: ['recipe', recipeId],
     queryFn: async () => {
